@@ -1,0 +1,14 @@
+# .NET Backend & Publish Output
+backend/bin/
+backend/obj/
+backend/wwwroot/
+publish/
+
+# Vue 3 Frontend
+frontend/node_modules/
+frontend/dist/
+
+# Runtime SQLite & Temp Data
+data/
+*.log
+*.tsbuildinfo
