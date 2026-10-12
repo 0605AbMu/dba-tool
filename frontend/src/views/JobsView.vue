@@ -361,14 +361,7 @@ const filteredJobs = computed(() => {
               <i class="pi pi-eye"></i>
               Sinov
             </button>
-            <button
-              @click="runMaintenanceNow(job)"
-              class="inline-flex items-center gap-1.5 rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs font-semibold text-indigo-700 hover:bg-indigo-100 cursor-pointer"
-              title="Bazani profilaktika qilish"
-            >
-              <i class="pi pi-wrench"></i>
-              Profilaktika
-            </button>
+
             <button
               @click="toggleJobStatus(job)"
               class="rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-2 text-xs text-slate-700 hover:bg-slate-100 cursor-pointer"
