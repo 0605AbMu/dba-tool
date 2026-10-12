@@ -3,10 +3,14 @@ import { ref, computed, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useDbaStore, formatBytes, formatDuration } from '@/stores/dbaStore'
 import { api } from '@/services/api'
+import { useModalBackdrop } from '@/composables/useModalBackdrop'
 import ProcessDiagnosticCard from './ProcessDiagnosticCard.vue'
 
 const store = useDbaStore()
 const router = useRouter()
+const { onBackdropMouseDown, onBackdropClick } = useModalBackdrop(() => {
+  store.liveDrawerOpen = false
+})
 const terminalEl = ref<HTMLElement | null>(null)
 const autoScroll = ref(true)
 const logSearch = ref('')
@@ -110,7 +114,8 @@ function getLineClass(line: string, parsedJson?: Record<string, unknown> | null)
     <div
       v-if="store.liveDrawerOpen"
       class="fixed inset-0 z-50 flex justify-end bg-slate-900/40 backdrop-blur-xs"
-      @click.self="store.liveDrawerOpen = false"
+      @mousedown="onBackdropMouseDown"
+      @click="onBackdropClick"
     >
       <div
         class="flex h-full w-full max-w-4xl flex-col border-l border-slate-200 bg-white shadow-2xl"

@@ -3,9 +3,11 @@ import { onMounted, ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useDbaStore, ENGINE_METADATA, formatBytes } from '@/stores/dbaStore'
 import { api } from '@/services/api'
+import { useModalBackdrop } from '@/composables/useModalBackdrop'
 import type { ConnectionProfile, StorageProfile, EncryptionProfile, NotificationProfile } from '@/types/models'
 
 const store = useDbaStore()
+const { onBackdropMouseDown, onBackdropClick } = useModalBackdrop()
 const route = useRoute()
 const router = useRouter()
 
@@ -160,6 +162,13 @@ function onEngineChange() {
     } else if (connForm.value.host?.endsWith('.db') || connForm.value.host?.endsWith('.sqlite')) {
       connForm.value.host = 'localhost'
     }
+  }
+  if (connForm.value.type === 'mssql') {
+    connForm.value.authSource = connForm.value.authSource || 'master'
+  } else if (connForm.value.type === 'postgres') {
+    connForm.value.authSource = connForm.value.authSource || 'postgres'
+  } else if (connForm.value.type === 'mongo') {
+    connForm.value.authSource = connForm.value.authSource || 'admin'
   }
 }
 
@@ -843,7 +852,8 @@ async function testNotification(n: NotificationProfile) {
     <div
       v-if="showDbExplorerModal"
       class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-xs"
-      @click.self="showDbExplorerModal = false"
+      @mousedown="onBackdropMouseDown"
+      @click="onBackdropClick($event, () => (showDbExplorerModal = false))"
     >
       <div class="w-full max-w-lg rounded-2xl border border-slate-200 bg-white shadow-2xl">
         <div class="flex items-center justify-between border-b border-slate-200 px-6 py-4">
@@ -911,7 +921,8 @@ async function testNotification(n: NotificationProfile) {
     <div
       v-if="showConnModal"
       class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-xs"
-      @click.self="showConnModal = false"
+      @mousedown="onBackdropMouseDown"
+      @click="onBackdropClick($event, () => (showConnModal = false))"
     >
       <div class="w-full max-w-2xl rounded-2xl border border-slate-200 bg-white shadow-2xl">
         <div class="flex items-center justify-between border-b border-slate-200 px-6 py-4">
@@ -991,6 +1002,24 @@ async function testNotification(n: NotificationProfile) {
             </div>
           </div>
 
+          <!-- AuthSource / System Database -->
+          <div v-if="['mssql', 'postgres', 'mongo'].includes(connForm.type || '')" class="grid grid-cols-1 gap-4">
+            <div>
+              <label class="mb-1 block font-semibold text-slate-700">
+                Auth / System Database (AuthSource)
+                <span class="text-xs font-normal text-slate-500 ml-1">
+                  (MSSQL: <code>master</code>, Postgres: <code>postgres</code>, Mongo: <code>admin</code>)
+                </span>
+              </label>
+              <input
+                v-model="connForm.authSource"
+                type="text"
+                :placeholder="connForm.type === 'mssql' ? 'master' : (connForm.type === 'postgres' ? 'postgres' : 'admin')"
+                class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 font-mono text-slate-900"
+              />
+            </div>
+          </div>
+
           <!-- TLS Toggle -->
           <div class="flex items-center gap-2 pt-1 text-slate-700">
             <input type="checkbox" v-model="connForm.tlsEnabled" id="connTls" class="rounded accent-emerald-600" />
@@ -1019,7 +1048,8 @@ async function testNotification(n: NotificationProfile) {
     <div
       v-if="showStorageModal"
       class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-xs"
-      @click.self="showStorageModal = false"
+      @mousedown="onBackdropMouseDown"
+      @click="onBackdropClick($event, () => (showStorageModal = false))"
     >
       <div class="w-full max-w-xl rounded-2xl border border-slate-200 bg-white shadow-2xl">
         <div class="flex items-center justify-between border-b border-slate-200 px-6 py-4">
@@ -1115,7 +1145,8 @@ async function testNotification(n: NotificationProfile) {
     <div
       v-if="showEncModal"
       class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-xs"
-      @click.self="showEncModal = false"
+      @mousedown="onBackdropMouseDown"
+      @click="onBackdropClick($event, () => (showEncModal = false))"
     >
       <div class="w-full max-w-lg rounded-2xl border border-slate-200 bg-white shadow-2xl">
         <div class="flex items-center justify-between border-b border-slate-200 px-6 py-4">
@@ -1193,7 +1224,8 @@ async function testNotification(n: NotificationProfile) {
     <div
       v-if="showNotifModal"
       class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-xs"
-      @click.self="showNotifModal = false"
+      @mousedown="onBackdropMouseDown"
+      @click="onBackdropClick($event, () => (showNotifModal = false))"
     >
       <div class="w-full max-w-lg rounded-2xl border border-slate-200 bg-white shadow-2xl">
         <div class="flex items-center justify-between border-b border-slate-200 px-6 py-4">

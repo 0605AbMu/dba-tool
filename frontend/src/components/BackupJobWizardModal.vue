@@ -2,6 +2,7 @@
 import { ref, computed, watch } from 'vue'
 import { useDbaStore, ENGINE_METADATA } from '@/stores/dbaStore'
 import { api } from '@/services/api'
+import { useModalBackdrop } from '@/composables/useModalBackdrop'
 import type { BackupJob, ConnectionProfile } from '@/types/models'
 
 const props = defineProps<{
@@ -13,6 +14,8 @@ const emit = defineEmits<{
   (e: 'close'): void
   (e: 'saved', job: BackupJob): void
 }>()
+
+const { onBackdropMouseDown, onBackdropClick } = useModalBackdrop(() => emit('close'))
 
 const store = useDbaStore()
 
@@ -288,7 +291,8 @@ async function submitJob(runImmediately = false) {
   <div
     v-if="show"
     class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-xs"
-    @click.self="emit('close')"
+    @mousedown="onBackdropMouseDown"
+    @click="onBackdropClick"
   >
     <div
       class="flex max-h-[92vh] w-full max-w-3xl flex-col rounded-2xl border border-slate-200 bg-white shadow-2xl overflow-hidden"

@@ -134,8 +134,13 @@ public sealed class DbbConfigGeneratorService(
             };
             if (conn.Port > 0) cMap["port"] = conn.Port;
             if (!string.IsNullOrWhiteSpace(conn.Username)) cMap["user"] = conn.Username;
-            if (!string.IsNullOrWhiteSpace(conn.Password)) cMap["pass"] = conn.Password;
-            if (!string.IsNullOrWhiteSpace(conn.AuthSource)) cMap["auth_source"] = conn.AuthSource;
+            var effectiveAuthSource = !string.IsNullOrWhiteSpace(conn.AuthSource)
+                ? conn.AuthSource
+                : (string.Equals(conn.Type, "mssql", StringComparison.OrdinalIgnoreCase) || string.Equals(conn.Type, "sqlserver", StringComparison.OrdinalIgnoreCase) ? "master"
+                  : string.Equals(conn.Type, "postgres", StringComparison.OrdinalIgnoreCase) || string.Equals(conn.Type, "postgresql", StringComparison.OrdinalIgnoreCase) ? "postgres"
+                  : string.Equals(conn.Type, "mongo", StringComparison.OrdinalIgnoreCase) || string.Equals(conn.Type, "mongodb", StringComparison.OrdinalIgnoreCase) ? "admin"
+                  : null);
+            if (!string.IsNullOrWhiteSpace(effectiveAuthSource)) cMap["auth_source"] = effectiveAuthSource;
             if (conn.InfluxVersion > 0) cMap["version"] = conn.InfluxVersion;
             if (!string.IsNullOrWhiteSpace(conn.InfluxMode)) cMap["influx_mode"] = conn.InfluxMode;
 

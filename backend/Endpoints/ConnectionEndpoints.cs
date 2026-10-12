@@ -44,6 +44,14 @@ public static class ConnectionEndpoints
         input.CreatedAt = DateTime.UtcNow;
         input.UpdatedAt = DateTime.UtcNow;
 
+        if (string.IsNullOrWhiteSpace(input.AuthSource))
+        {
+            var eng = (input.Type ?? "").Trim().ToLowerInvariant();
+            if (eng is "mssql" or "sqlserver") input.AuthSource = "master";
+            else if (eng is "postgres" or "postgresql") input.AuthSource = "postgres";
+            else if (eng is "mongo" or "mongodb") input.AuthSource = "admin";
+        }
+
         db.ConnectionProfiles.Add(input);
         await db.SaveChangesAsync(ct);
         await cfg.RegenerateYamlAsync(ct);
@@ -67,7 +75,12 @@ public static class ConnectionEndpoints
         existing.Port = input.Port;
         existing.Username = input.Username;
         existing.Password = input.Password;
-        existing.AuthSource = input.AuthSource;
+        existing.AuthSource = !string.IsNullOrWhiteSpace(input.AuthSource)
+            ? input.AuthSource
+            : ((input.Type ?? "").Trim().ToLowerInvariant() is "mssql" or "sqlserver" ? "master"
+              : (input.Type ?? "").Trim().ToLowerInvariant() is "postgres" or "postgresql" ? "postgres"
+              : (input.Type ?? "").Trim().ToLowerInvariant() is "mongo" or "mongodb" ? "admin"
+              : input.AuthSource);
         existing.InfluxVersion = input.InfluxVersion;
         existing.InfluxMode = input.InfluxMode;
         existing.TlsEnabled = input.TlsEnabled;

@@ -430,15 +430,45 @@ public sealed class DbbCliRunnerService(
             args.Add("--profile");
             args.Add(req.Profile);
         }
-        if (!string.IsNullOrWhiteSpace(req.AuthSource))
+        // AuthSource resolution: explicitly requested > connection profile > engine default
+        var authSource = req.AuthSource;
+        if (string.IsNullOrWhiteSpace(authSource))
         {
-            args.Add("--auth-source");
-            args.Add(req.AuthSource);
+            authSource = conn?.AuthSource;
         }
-        else if (!string.IsNullOrWhiteSpace(conn?.AuthSource))
+        if (string.IsNullOrWhiteSpace(authSource))
+        {
+            var engineType = conn?.Type;
+            if (string.IsNullOrWhiteSpace(engineType) && !string.IsNullOrWhiteSpace(req.Filename))
+            {
+                var prefix = req.Filename.Split('-')[0].ToLowerInvariant();
+                if (prefix is "mssql" or "sqlserver" or "postgres" or "postgresql" or "mongo" or "mongodb")
+                {
+                    engineType = prefix;
+                }
+            }
+
+            if (string.Equals(engineType, "mssql", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(engineType, "sqlserver", StringComparison.OrdinalIgnoreCase))
+            {
+                authSource = "master";
+            }
+            else if (string.Equals(engineType, "postgres", StringComparison.OrdinalIgnoreCase)
+                     || string.Equals(engineType, "postgresql", StringComparison.OrdinalIgnoreCase))
+            {
+                authSource = "postgres";
+            }
+            else if (string.Equals(engineType, "mongo", StringComparison.OrdinalIgnoreCase)
+                     || string.Equals(engineType, "mongodb", StringComparison.OrdinalIgnoreCase))
+            {
+                authSource = "admin";
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(authSource))
         {
             args.Add("--auth-source");
-            args.Add(conn.AuthSource);
+            args.Add(authSource);
         }
 
         if (req.DryRun)

@@ -2,6 +2,7 @@
 import { ref, computed, watch } from 'vue'
 import { useDbaStore, formatBytes, formatDateTime, ENGINE_METADATA } from '@/stores/dbaStore'
 import { api } from '@/services/api'
+import { useModalBackdrop } from '@/composables/useModalBackdrop'
 import type { BackupArtifact, ConnectionProfile } from '@/types/models'
 
 const props = defineProps<{
@@ -13,6 +14,8 @@ const emit = defineEmits<{
   (e: 'close'): void
   (e: 'started'): void
 }>()
+
+const { onBackdropMouseDown, onBackdropClick } = useModalBackdrop(() => emit('close'))
 
 const store = useDbaStore()
 
@@ -35,6 +38,7 @@ const form = ref({
   base: '',
   compress: '',
   encryption: '',
+  authSource: '',
 })
 
 watch(
@@ -46,6 +50,7 @@ watch(
       confirmDangerChecked.value = false
       const engine = item.engine || item.sidecar?.type || 'postgres'
       const matchingConn = store.connections.find((c) => c.type === engine) || store.connections[0]
+      const defaultAuth = matchingConn?.authSource || (matchingConn?.type === 'mssql' ? 'master' : (matchingConn?.type === 'postgres' ? 'postgres' : ''))
 
       form.value = {
         filename: item.filename,
@@ -58,10 +63,29 @@ watch(
         base: item.sidecar?.base || '',
         compress: '',
         encryption: '',
+        authSource: defaultAuth,
       }
     }
   },
   { immediate: true }
+)
+
+watch(
+  () => form.value.connectionProfileId,
+  (newId) => {
+    const conn = store.connections.find((c) => c.id === newId)
+    if (conn) {
+      if (conn.authSource) {
+        form.value.authSource = conn.authSource
+      } else if (conn.type === 'mssql') {
+        form.value.authSource = 'master'
+      } else if (conn.type === 'postgres') {
+        form.value.authSource = 'postgres'
+      } else if (conn.type === 'mongo') {
+        form.value.authSource = 'admin'
+      }
+    }
+  }
 )
 
 const selectedConn = computed<ConnectionProfile | undefined>(() => {
@@ -121,7 +145,8 @@ async function executeRealRestore() {
   <div
     v-if="show && artifact"
     class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-xs"
-    @click.self="emit('close')"
+    @mousedown="onBackdropMouseDown"
+    @click="onBackdropClick"
   >
     <div
       class="flex max-h-[92vh] w-full max-w-3xl flex-col rounded-2xl border border-slate-200 bg-white shadow-2xl"
@@ -291,6 +316,24 @@ async function executeRealRestore() {
                 Safe Sandbox ({{ artifact.database || 'main' }}_restored_test)
               </button>
             </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-800 mb-1">
+              Auth / Maintenance Database (AuthSource)
+              <span class="text-[11px] font-normal text-slate-500 ml-1">
+                (MSSQL: <code>master</code>, Postgres: <code>postgres</code>, Mongo: <code>admin</code>)
+              </span>
+            </label>
+            <input
+              type="text"
+              v-model="form.authSource"
+              placeholder="e.g. master"
+              class="w-full rounded-xl border border-slate-300 px-3.5 py-2 font-mono text-xs font-semibold text-slate-900 focus:border-amber-500 focus:outline-hidden"
+            />
+            <p class="mt-1 text-[11px] text-slate-500">
+              Maqsadli baza serverda hali mavjud bo'lmasa, tizim avval ushbu baza orqali ulanib login qiladi va bazani yaratadi.
+            </p>
           </div>
 
           <label class="flex items-center gap-2.5 rounded-xl border border-slate-200 bg-slate-50 p-3 cursor-pointer">

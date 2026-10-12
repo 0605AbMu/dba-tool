@@ -8,10 +8,12 @@ import {
   ENGINE_METADATA,
 } from '@/stores/dbaStore'
 import { api } from '@/services/api'
+import { useModalBackdrop } from '@/composables/useModalBackdrop'
 import type { BackupArtifact, SidecarMetadata } from '@/types/models'
 import RestoreWizardModal from '@/components/RestoreWizardModal.vue'
 
 const store = useDbaStore()
+const { onBackdropMouseDown, onBackdropClick } = useModalBackdrop()
 const selectedStorageProfileId = ref<number | null>(null)
 const prefixSearch = ref('')
 const loading = ref(false)
@@ -444,7 +446,8 @@ async function deleteArtifact(item: BackupArtifact) {
     <div
       v-if="showSidecarModal"
       class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-xs"
-      @click.self="showSidecarModal = false"
+      @mousedown="onBackdropMouseDown"
+      @click="onBackdropClick($event, () => (showSidecarModal = false))"
     >
       <div
         class="flex max-h-[88vh] w-full max-w-3xl flex-col rounded-2xl border border-slate-200 bg-white shadow-2xl"
@@ -567,7 +570,8 @@ async function deleteArtifact(item: BackupArtifact) {
     <div
       v-if="showPruneModal"
       class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-xs"
-      @click.self="showPruneModal = false"
+      @mousedown="onBackdropMouseDown"
+      @click="onBackdropClick($event, () => (showPruneModal = false))"
     >
       <div class="w-full max-w-xl rounded-2xl border border-slate-200 bg-white shadow-2xl">
         <div class="flex items-center justify-between border-b border-slate-200 px-6 py-4">
@@ -685,7 +689,8 @@ async function deleteArtifact(item: BackupArtifact) {
     <div
       v-if="showArchiveModal"
       class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-xs"
-      @click.self="showArchiveModal = false"
+      @mousedown="onBackdropMouseDown"
+      @click="onBackdropClick($event, () => (showArchiveModal = false))"
     >
       <div class="w-full max-w-xl rounded-2xl border border-slate-200 bg-white shadow-2xl">
         <div class="flex items-center justify-between border-b border-slate-200 px-6 py-4">

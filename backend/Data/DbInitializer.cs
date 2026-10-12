@@ -41,6 +41,8 @@ public static class DbInitializer
         try { await db.Database.ExecuteSqlRawAsync(@"ALTER TABLE ""JobExecutions"" ADD COLUMN ""CurrentStage"" TEXT;", ct); } catch { }
         try { await db.Database.ExecuteSqlRawAsync(@"ALTER TABLE ""JobExecutions"" ADD COLUMN ""ErrorSummary"" TEXT;", ct); } catch { }
         try { await db.Database.ExecuteSqlRawAsync(@"ALTER TABLE ""JobExecutions"" ADD COLUMN ""ErrorDetails"" TEXT;", ct); } catch { }
+        try { await db.Database.ExecuteSqlRawAsync(@"UPDATE ""ConnectionProfiles"" SET ""AuthSource"" = 'master' WHERE LOWER(""Type"") IN ('mssql', 'sqlserver') AND (""AuthSource"" IS NULL OR ""AuthSource"" = '');", ct); } catch { }
+        try { await db.Database.ExecuteSqlRawAsync(@"UPDATE ""ConnectionProfiles"" SET ""AuthSource"" = 'postgres' WHERE LOWER(""Type"") IN ('postgres', 'postgresql') AND (""AuthSource"" IS NULL OR ""AuthSource"" = '');", ct); } catch { }
 
         // Reset any stale 'running' executions from previous process restarts
         var staleRunning = await db.JobExecutions
